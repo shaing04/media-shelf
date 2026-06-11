@@ -1,6 +1,9 @@
 import click
+import csv
+import io
 import random as _random
 from datetime import date
+from pathlib import Path
 from shelf import storage
 
 TYPES = ["book", "movie", "show", "game"]
@@ -195,6 +198,54 @@ def random_entry(media_type):
     click.echo(f"Status: {e['status']}")
     click.echo(f"Rating: {e['rating'] if e['rating'] is not None else '---'}")
     click.echo(f"Note:   {e['note'] if e['note'] else '---'}")
+
+
+@main.command()
+@click.option("--format", "fmt", default="markdown", type=click.Choice(["markdown", "csv"]), show_default=True, help="Output format")
+@click.option("--output", "-o", default=None, help="Output file path (default: shelf_export.md / shelf_export.csv)")
+def export(fmt, output):
+    """Export your shelf to a markdown or CSV file."""
+    entries = storage.load()
+
+    if not entries:
+        click.echo("No entries to export.")
+        return
+
+    if output is None:
+        output = f"shelf_export.{'md' if fmt == 'markdown' else 'csv'}"
+
+    path = Path(output)
+
+    if fmt == "markdown":
+        lines = [
+            "# My Shelf",
+            f"_Exported {date.today().isoformat()} — {len(entries)} entries_",
+            "",
+        ]
+        for media_type in TYPES:
+            group = [e for e in entries if e["type"] == media_type]
+            if not group:
+                continue
+            lines.append(f"## {media_type.capitalize()}s")
+            lines.append("")
+            lines.append("| Title | Status | Rating | Note |")
+            lines.append("|-------|--------|--------|------|")
+            for e in group:
+                rating = str(e["rating"]) if e["rating"] is not None else "—"
+                note = e["note"] or "—"
+                lines.append(f"| {e['title']} | {e['status']} | {rating} | {note} |")
+            lines.append("")
+        path.write_text("\n".join(lines), encoding="utf-8")
+
+    else:
+        buf = io.StringIO()
+        writer = csv.DictWriter(buf, fieldnames=["id", "title", "type", "status", "rating", "note", "added_date"])
+        writer.writeheader()
+        for e in entries:
+            writer.writerow({k: (v if v is not None else "") for k, v in e.items()})
+        path.write_text(buf.getvalue(), encoding="utf-8")
+
+    click.echo(f"Exported {len(entries)} entries to {path}")
 
 
 @main.command()
