@@ -1,4 +1,5 @@
 import click
+import random as _random
 from datetime import date
 from shelf import storage
 
@@ -135,3 +136,55 @@ def search(query):
         return
 
     _print_table(matches)
+
+
+@main.command("random")
+@click.option("--type", "media_type", default=None, type=click.Choice(TYPES), help="Filter by type")
+def random_entry(media_type):
+    """Pick a random entry that isn't done yet."""
+    entries = storage.load()
+    pool = [e for e in entries if e["status"] != "done"]
+
+    if media_type:
+        pool = [e for e in pool if e["type"] == media_type]
+
+    if not pool:
+        click.echo("Nothing to pick from.")
+        return
+
+    e = _random.choice(pool)
+    click.echo(f"ID:     {e['id']}")
+    click.echo(f"Title:  {e['title']}")
+    click.echo(f"Type:   {e['type']}")
+    click.echo(f"Status: {e['status']}")
+    click.echo(f"Rating: {e['rating'] if e['rating'] is not None else '---'}")
+    click.echo(f"Note:   {e['note'] if e['note'] else '---'}")
+
+
+@main.command()
+def stats():
+    """Show summary statistics for your shelf."""
+    entries = storage.load()
+
+    if not entries:
+        click.echo("No entries yet.")
+        return
+
+    click.echo("By type:")
+    for t in TYPES:
+        count = sum(1 for e in entries if e["type"] == t)
+        click.echo(f"  {t}: {count}")
+
+    click.echo("\nBy status:")
+    for s in STATUSES:
+        count = sum(1 for e in entries if e["status"] == s)
+        if count:
+            click.echo(f"  {s}: {count}")
+
+    click.echo("\nAverage rating by type:")
+    for t in TYPES:
+        ratings = [e["rating"] for e in entries if e["type"] == t and e["rating"] is not None]
+        if ratings:
+            click.echo(f"  {t}: {sum(ratings) / len(ratings):.1f}")
+        else:
+            click.echo(f"  {t}: N/A")
