@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: shelf
+Version: 0.1.0
+Summary: A personal media tracking CLI
+Requires-Python: >=3.13
+Description-Content-Type: text/markdown
+Requires-Dist: click>=8.4.1
+
+# shelf
+
+A CLI tool for tracking your personal media library.
