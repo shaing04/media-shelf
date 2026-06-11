@@ -11,6 +11,32 @@ def main():
     pass
 
 
+def _print_table(entries: list[dict]) -> None:
+    id_w = max(max(len(str(e["id"])) for e in entries), 2)
+    title_w = max(max(len(e["title"]) for e in entries), 5)
+    type_w = max(max(len(e["type"]) for e in entries), 4)
+    status_w = max(max(len(e["status"]) for e in entries), 6)
+    rating_w = 6
+
+    header = (
+        f"{'ID':<{id_w}}  {'Title':<{title_w}}  {'Type':<{type_w}}  "
+        f"{'Status':<{status_w}}  {'Rating':<{rating_w}}"
+    )
+    click.echo(header)
+    click.echo("-" * len(header))
+
+    for e in entries:
+        rating_str = str(e["rating"]) if e["rating"] is not None else "---"
+        click.echo(
+            f"{e['id']:<{id_w}}  {e['title']:<{title_w}}  {e['type']:<{type_w}}  "
+            f"{e['status']:<{status_w}}  {rating_str:<{rating_w}}"
+        )
+
+
+def _find(entries: list[dict], entry_id: int) -> dict | None:
+    return next((e for e in entries if e["id"] == entry_id), None)
+
+
 @main.command()
 @click.argument("title")
 @click.option("--type", "media_type", required=True, type=click.Choice(TYPES), help="Media type")
@@ -52,27 +78,60 @@ def list_entries(media_type, status, rating):
         click.echo("No entries found.")
         return
 
-    id_w = max(len(str(e["id"])) for e in entries)
-    id_w = max(id_w, 2)
-    title_w = max(len(e["title"]) for e in entries)
-    title_w = max(title_w, 5)
-    type_w = max(len(e["type"]) for e in entries)
-    type_w = max(type_w, 4)
-    status_w = max(len(e["status"]) for e in entries)
-    status_w = max(status_w, 6)
-    rating_w = 6
+    _print_table(entries)
 
-    header = (
-        f"{'ID':<{id_w}}  {'Title':<{title_w}}  {'Type':<{type_w}}  "
-        f"{'Status':<{status_w}}  {'Rating':<{rating_w}}"
-    )
-    separator = "-" * len(header)
-    click.echo(header)
-    click.echo(separator)
 
-    for e in entries:
-        rating_str = str(e["rating"]) if e["rating"] is not None else "---"
-        click.echo(
-            f"{e['id']:<{id_w}}  {e['title']:<{title_w}}  {e['type']:<{type_w}}  "
-            f"{e['status']:<{status_w}}  {rating_str:<{rating_w}}"
-        )
+@main.command()
+@click.argument("entry_id", metavar="ID", type=int)
+@click.option("--status", default=None, type=click.Choice(STATUSES), help="New status")
+@click.option("--rating", default=None, type=float, help="Rating")
+@click.option("--note", default=None, help="Note")
+def update(entry_id, status, rating, note):
+    """Update an existing entry by ID."""
+    entries = storage.load()
+    entry = _find(entries, entry_id)
+
+    if entry is None:
+        click.echo(f"Error: no entry with ID {entry_id}.", err=True)
+        raise SystemExit(1)
+
+    if status is not None:
+        entry["status"] = status
+    if rating is not None:
+        entry["rating"] = rating
+    if note is not None:
+        entry["note"] = note
+
+    storage.save(entries)
+    click.echo(f"Updated: {entry['title']}")
+
+
+@main.command()
+@click.argument("entry_id", metavar="ID", type=int)
+def delete(entry_id):
+    """Delete an entry by ID."""
+    entries = storage.load()
+    entry = _find(entries, entry_id)
+
+    if entry is None:
+        click.echo(f"Error: no entry with ID {entry_id}.", err=True)
+        raise SystemExit(1)
+
+    entries.remove(entry)
+    storage.save(entries)
+    click.echo(f"Deleted: {entry['title']}")
+
+
+@main.command()
+@click.argument("query")
+def search(query):
+    """Search entries by title (case-insensitive)."""
+    entries = storage.load()
+    needle = query.lower()
+    matches = [e for e in entries if needle in e["title"].lower()]
+
+    if not matches:
+        click.echo("No results found.")
+        return
+
+    _print_table(matches)
