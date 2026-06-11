@@ -22,13 +22,15 @@ All commands are prefixed with `uv run`:
 ```
 uv run shelf add "Dune" --type book --status to-read
 uv run shelf add "The Bear" --type show --status watching --note "season 2 is great"
+uv run shelf add "Inception" --type movie --status to-watch
+uv run shelf add "Elden Ring" --type game --status playing
 ```
 
-| Flag | Required | Accepted values | Description |
-|------|----------|-----------------|-------------|
-| `--type` | Yes | `book`, `movie`, `show`, `game` | The kind of media you're tracking |
-| `--status` | Yes | `to-read`, `to-watch`, `to-play` — not started yet; `reading`, `watching`, `playing` — in progress; `done` — finished | Where you currently are with this entry |
-| `--note` | No | Any text | A short free-text note attached to the entry |
+| Flag       | Required | Accepted values                                                                                                       | Description                                  |
+| ---------- | -------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `--type`   | Yes      | `book`, `movie`, `show`, `game`                                                                                       | The kind of media you're tracking            |
+| `--status` | Yes      | `to-read`, `to-watch`, `to-play` — not started yet; `reading`, `watching`, `playing` — in progress; `done` — finished | Where you currently are with this entry      |
+| `--note`   | No       | Any text                                                                                                              | A short free-text note attached to the entry |
 
 ---
 
@@ -43,12 +45,12 @@ uv run shelf list --sort title
 uv run shelf list --type book --sort status
 ```
 
-| Flag | Accepted values | Description |
-|------|-----------------|-------------|
-| `--type` | `book`, `movie`, `show`, `game` | Only show entries of this type |
-| `--status` | `to-read`, `to-watch`, `to-play`, `reading`, `watching`, `playing`, `done` | Only show entries with this status |
-| `--rating` | Any number (e.g. `8`, `9.5`) | Only show entries with this exact rating |
-| `--sort` | `title`, `type`, `status`, `rating`, `date` | Order results by this field; rated entries appear first when sorting by rating |
+| Flag       | Accepted values                                                            | Description                                                                    |
+| ---------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `--type`   | `book`, `movie`, `show`, `game`                                            | Only show entries of this type                                                 |
+| `--status` | `to-read`, `to-watch`, `to-play`, `reading`, `watching`, `playing`, `done` | Only show entries with this status                                             |
+| `--rating` | Any number (e.g. `8`, `9.5`)                                               | Only show entries with this exact rating                                       |
+| `--sort`   | `title`, `type`, `status`, `rating`, `date`                                | Order results by this field; rated entries appear first when sorting by rating |
 
 ---
 
@@ -69,11 +71,11 @@ uv run shelf update <id> --status reading
 uv run shelf update <id> --rating 9.5 --note "even better the second time"
 ```
 
-| Flag | Accepted values | Description |
-|------|-----------------|-------------|
-| `--status` | `to-read`, `to-watch`, `to-play`, `reading`, `watching`, `playing`, `done` | Change the current status |
-| `--rating` | Any number (e.g. `7`, `8.5`) | Set or update the numeric rating |
-| `--note` | Any text | Set or update the note |
+| Flag       | Accepted values                                                            | Description                      |
+| ---------- | -------------------------------------------------------------------------- | -------------------------------- |
+| `--status` | `to-read`, `to-watch`, `to-play`, `reading`, `watching`, `playing`, `done` | Change the current status        |
+| `--rating` | Any number (e.g. `7`, `8.5`)                                               | Set or update the numeric rating |
+| `--note`   | Any text                                                                   | Set or update the note           |
 
 All flags are optional — only the fields you provide are changed.
 
@@ -128,9 +130,9 @@ uv run shelf export --format csv           # CSV → shelf_export.csv
 uv run shelf export -o ~/backup/shelf.md   # custom output path
 ```
 
-| Flag | Description |
-|------|-------------|
-| `--format` | Output format: `markdown` (default) or `csv` |
+| Flag              | Description                                                                 |
+| ----------------- | --------------------------------------------------------------------------- |
+| `--format`        | Output format: `markdown` (default) or `csv`                                |
 | `-o` / `--output` | File path to write to (defaults to `shelf_export.md` or `shelf_export.csv`) |
 
 Markdown export groups entries by type in tables. CSV export includes all fields with a header row and imports cleanly into spreadsheets.
