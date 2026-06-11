@@ -24,11 +24,11 @@ uv run shelf add "Dune" --type book --status to-read
 uv run shelf add "The Bear" --type show --status watching --note "season 2 is great"
 ```
 
-| Flag | Required | Description |
-|------|----------|-------------|
-| `--type` | Yes | Media type: `book`, `movie`, `show`, or `game` |
-| `--status` | Yes | Where you are with it: `to-read`, `to-watch`, `to-play`, `reading`, `watching`, `playing`, or `done` |
-| `--note` | No | A short free-text note attached to the entry |
+| Flag | Required | Accepted values | Description |
+|------|----------|-----------------|-------------|
+| `--type` | Yes | `book`, `movie`, `show`, `game` | The kind of media you're tracking |
+| `--status` | Yes | `to-read`, `to-watch`, `to-play` — not started yet; `reading`, `watching`, `playing` — in progress; `done` — finished | Where you currently are with this entry |
+| `--note` | No | Any text | A short free-text note attached to the entry |
 
 ---
 
@@ -43,12 +43,12 @@ uv run shelf list --sort title
 uv run shelf list --type book --sort status
 ```
 
-| Flag | Description |
-|------|-------------|
-| `--type` | Only show entries of this type (`book`, `movie`, `show`, `game`) |
-| `--status` | Only show entries with this status |
-| `--rating` | Only show entries with this exact rating |
-| `--sort` | Order results by a field: `title`, `type`, `status`, `rating`, or `date` |
+| Flag | Accepted values | Description |
+|------|-----------------|-------------|
+| `--type` | `book`, `movie`, `show`, `game` | Only show entries of this type |
+| `--status` | `to-read`, `to-watch`, `to-play`, `reading`, `watching`, `playing`, `done` | Only show entries with this status |
+| `--rating` | Any number (e.g. `8`, `9.5`) | Only show entries with this exact rating |
+| `--sort` | `title`, `type`, `status`, `rating`, `date` | Order results by this field; rated entries appear first when sorting by rating |
 
 ---
 
@@ -69,11 +69,11 @@ uv run shelf update <id> --status reading
 uv run shelf update <id> --rating 9.5 --note "even better the second time"
 ```
 
-| Flag | Description |
-|------|-------------|
-| `--status` | Change the current status |
-| `--rating` | Set or update the numeric rating |
-| `--note` | Set or update the note |
+| Flag | Accepted values | Description |
+|------|-----------------|-------------|
+| `--status` | `to-read`, `to-watch`, `to-play`, `reading`, `watching`, `playing`, `done` | Change the current status |
+| `--rating` | Any number (e.g. `7`, `8.5`) | Set or update the numeric rating |
+| `--note` | Any text | Set or update the note |
 
 All flags are optional — only the fields you provide are changed.
 
