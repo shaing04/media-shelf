@@ -1,4 +1,4 @@
-# shelf
+# Media Shelf
 
 A command-line tool for tracking books, movies, TV shows, and games. Entries are stored locally in `~/.shelf/data.json` so your list is always available offline and never tied to an account.
 
