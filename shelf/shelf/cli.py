@@ -6,6 +6,13 @@ from shelf import storage
 TYPES = ["book", "movie", "show", "game"]
 STATUSES = ["to-read", "to-watch", "to-play", "reading", "watching", "playing", "done"]
 
+DONE_VERB = {
+    "book": "Read",
+    "movie": "Watched",
+    "show": "Watched",
+    "game": "Played",
+}
+
 
 @click.group()
 def main():
@@ -136,6 +143,23 @@ def search(query):
         return
 
     _print_table(matches)
+
+
+@main.command()
+@click.argument("entry_id", metavar="ID", type=int)
+def done(entry_id):
+    """Mark an entry as done (read/watched/played based on type)."""
+    entries = storage.load()
+    entry = _find(entries, entry_id)
+
+    if entry is None:
+        click.echo(f"Error: no entry with ID {entry_id}.", err=True)
+        raise SystemExit(1)
+
+    entry["status"] = "done"
+    storage.save(entries)
+    verb = DONE_VERB[entry["type"]]
+    click.echo(f"{verb}: {entry['title']}")
 
 
 @main.command("random")
