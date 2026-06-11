@@ -4,84 +4,59 @@ A command-line tool for tracking books, movies, TV shows, and games. Entries are
 
 ## Usage
 
-Install with:
+Install inside an existing uv project. If you don't have one, create one first:
 
 ```
+uv init my-project && cd my-project
 uv add "git+https://github.com/shaing04/media-shelf.git"
 ```
 
-### Adding entries
+> **WSL users:** work from your native Linux home directory (`~/`) and not from `/mnt/c/` to avoid I/O errors.
+
+All commands are prefixed with `uv run`:
 
 ```
-shelf add "Dune" --type book --status done
-shelf add "The Bear" --type show --status watching --note "season 2 is great"
-shelf add "Inception" --type movie --status to-watch
-shelf add "Elden Ring" --type game --status playing
+# Add entries
+uv run shelf add "Dune" --type book --status to-read
+uv run shelf add "The Bear" --type show --status watching --note "season 2 is great"
+uv run shelf add "Inception" --type movie --status to-watch
+uv run shelf add "Elden Ring" --type game --status playing
 ```
 
 `--type` accepts: `book`, `movie`, `show`, `game`  
 `--status` accepts: `to-read`, `to-watch`, `to-play`, `reading`, `watching`, `playing`, `done`  
 `--note` is optional.
 
-### Listing entries
-
 ```
-shelf list                          # show all entries
-shelf list --type book              # filter by type
-shelf list --status done            # filter by status
-shelf list --rating 9               # filter by rating
-shelf list --sort title             # sort by title, type, status, rating, or date
-shelf list --type book --sort status
+# List entries
+uv run shelf list
+uv run shelf list --type book
+uv run shelf list --status done
+uv run shelf list --rating 9
+uv run shelf list --sort title        # sort by: title, type, status, rating, date
+
+# Mark as done (verb is chosen automatically: Read / Watched / Played)
+uv run shelf done 1
+
+# Update an entry (all flags optional, only provided fields are changed)
+uv run shelf update 1 --status reading
+uv run shelf update 1 --rating 9.5 --note "even better the second time"
+
+# Delete an entry
+uv run shelf delete 2
+
+# Search by title (case-insensitive)
+uv run shelf search "bear"
+
+# Pick a random entry that isn't done yet
+uv run shelf random
+uv run shelf random --type book
+
+# Show stats (counts by type and status, average rating per type)
+uv run shelf stats
+
+# Export your shelf
+uv run shelf export                        # markdown → shelf_export.md
+uv run shelf export --format csv           # CSV → shelf_export.csv
+uv run shelf export -o ~/backup/shelf.md   # custom output path
 ```
-
-### Marking as done
-
-```
-shelf done 1    # prints "Read: Dune" / "Watched: The Bear" / "Played: Elden Ring"
-```
-
-Picks the right verb automatically based on media type.
-
-### Updating an entry
-
-```
-shelf update 1 --status reading
-shelf update 1 --rating 9.5 --note "even better the second time"
-```
-
-All flags (`--status`, `--rating`, `--note`) are optional — only what's provided is changed.
-
-### Deleting an entry
-
-```
-shelf delete 2
-```
-
-### Searching by title
-
-```
-shelf search "bear"    # case-insensitive substring match, prints results as a table
-```
-
-### Random pick
-
-```
-shelf random            # pick a random entry that isn't done yet
-shelf random --type book
-```
-
-### Stats
-
-```
-shelf stats    # total entries by type and status, average rating per type
-```
-
-### Exporting
-
-```
-shelf export                        # exports to shelf_export.md (default)
-shelf export --format csv           # exports to shelf_export.csv
-shelf export -o ~/backup/shelf.md   # custom output path
-```
-
-Markdown export groups entries by type in tables. CSV export includes all fields and imports cleanly into spreadsheets.
