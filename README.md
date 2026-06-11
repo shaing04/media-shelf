@@ -15,48 +15,122 @@ uv add "git+https://github.com/shaing04/media-shelf.git"
 
 All commands are prefixed with `uv run`:
 
+---
+
+### Adding entries
+
 ```
-# Add entries
 uv run shelf add "Dune" --type book --status to-read
 uv run shelf add "The Bear" --type show --status watching --note "season 2 is great"
-uv run shelf add "Inception" --type movie --status to-watch
-uv run shelf add "Elden Ring" --type game --status playing
 ```
 
-`--type` accepts: `book`, `movie`, `show`, `game`  
-`--status` accepts: `to-read`, `to-watch`, `to-play`, `reading`, `watching`, `playing`, `done`  
-`--note` is optional.
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--type` | Yes | Media type: `book`, `movie`, `show`, or `game` |
+| `--status` | Yes | Where you are with it: `to-read`, `to-watch`, `to-play`, `reading`, `watching`, `playing`, or `done` |
+| `--note` | No | A short free-text note attached to the entry |
+
+---
+
+### Listing entries
 
 ```
-# List entries
 uv run shelf list
 uv run shelf list --type book
 uv run shelf list --status done
 uv run shelf list --rating 9
-uv run shelf list --sort title        # sort by: title, type, status, rating, date
+uv run shelf list --sort title
+uv run shelf list --type book --sort status
+```
 
-# Mark as done (verb is chosen automatically: Read / Watched / Played)
-uv run shelf done 1
+| Flag | Description |
+|------|-------------|
+| `--type` | Only show entries of this type (`book`, `movie`, `show`, `game`) |
+| `--status` | Only show entries with this status |
+| `--rating` | Only show entries with this exact rating |
+| `--sort` | Order results by a field: `title`, `type`, `status`, `rating`, or `date` |
 
-# Update an entry (all flags optional, only provided fields are changed)
-uv run shelf update 1 --status reading
-uv run shelf update 1 --rating 9.5 --note "even better the second time"
+---
 
-# Delete an entry
-uv run shelf delete 2
+### Marking as done
 
-# Search by title (case-insensitive)
+```
+uv run shelf done <id>
+```
+
+Sets the entry's status to `done` and prints a type-aware confirmation: `Read` for books, `Watched` for movies and shows, `Played` for games.
+
+---
+
+### Updating an entry
+
+```
+uv run shelf update <id> --status reading
+uv run shelf update <id> --rating 9.5 --note "even better the second time"
+```
+
+| Flag | Description |
+|------|-------------|
+| `--status` | Change the current status |
+| `--rating` | Set or update the numeric rating |
+| `--note` | Set or update the note |
+
+All flags are optional — only the fields you provide are changed.
+
+---
+
+### Deleting an entry
+
+```
+uv run shelf delete <id>
+```
+
+Permanently removes the entry with the given ID.
+
+---
+
+### Searching by title
+
+```
 uv run shelf search "bear"
+```
 
-# Pick a random entry that isn't done yet
+Case-insensitive substring match against all entry titles. Results are shown in the same table format as `list`.
+
+---
+
+### Random pick
+
+```
 uv run shelf random
 uv run shelf random --type book
+```
 
-# Show stats (counts by type and status, average rating per type)
+Picks a random entry that isn't marked as `done` yet. Use `--type` to limit the pick to a specific media type.
+
+---
+
+### Stats
+
+```
 uv run shelf stats
+```
 
-# Export your shelf
-uv run shelf export                        # markdown → shelf_export.md
+Prints a summary of your shelf: total entries broken down by type and by status, and the average rating per type.
+
+---
+
+### Exporting
+
+```
+uv run shelf export                        # markdown → shelf_export.md (default)
 uv run shelf export --format csv           # CSV → shelf_export.csv
 uv run shelf export -o ~/backup/shelf.md   # custom output path
 ```
+
+| Flag | Description |
+|------|-------------|
+| `--format` | Output format: `markdown` (default) or `csv` |
+| `-o` / `--output` | File path to write to (defaults to `shelf_export.md` or `shelf_export.csv`) |
+
+Markdown export groups entries by type in tables. CSV export includes all fields with a header row and imports cleanly into spreadsheets.
