@@ -1,9 +1,20 @@
 import click
+import csv
+import io
+import random as _random
 from datetime import date
+from pathlib import Path
 from shelf import storage
 
 TYPES = ["book", "movie", "show", "game"]
 STATUSES = ["to-read", "to-watch", "to-play", "reading", "watching", "playing", "done"]
+
+DONE_VERB = {
+    "book": "Read",
+    "movie": "Watched",
+    "show": "Watched",
+    "game": "Played",
+}
 
 
 @click.group()
@@ -63,8 +74,9 @@ def add(title, media_type, status, note):
 @click.option("--type", "media_type", default=None, type=click.Choice(TYPES), help="Filter by type")
 @click.option("--status", default=None, type=click.Choice(STATUSES), help="Filter by status")
 @click.option("--rating", default=None, type=float, help="Filter by rating")
-def list_entries(media_type, status, rating):
-    """List media entries with optional filters."""
+@click.option("--sort", default=None, type=click.Choice(["title", "type", "status", "rating", "date"]), help="Sort by field")
+def list_entries(media_type, status, rating, sort):
+    """List media entries with optional filters and sorting."""
     entries = storage.load()
 
     if media_type:
@@ -73,6 +85,17 @@ def list_entries(media_type, status, rating):
         entries = [e for e in entries if e["status"] == status]
     if rating is not None:
         entries = [e for e in entries if e["rating"] == rating]
+
+    if sort == "title":
+        entries = sorted(entries, key=lambda e: e["title"].lower())
+    elif sort == "type":
+        entries = sorted(entries, key=lambda e: (e["type"], e["title"].lower()))
+    elif sort == "status":
+        entries = sorted(entries, key=lambda e: (STATUSES.index(e["status"]), e["title"].lower()))
+    elif sort == "rating":
+        entries = sorted(entries, key=lambda e: (e["rating"] is None, -(e["rating"] or 0)))
+    elif sort == "date":
+        entries = sorted(entries, key=lambda e: e["added_date"])
 
     if not entries:
         click.echo("No entries found.")
@@ -135,3 +158,120 @@ def search(query):
         return
 
     _print_table(matches)
+
+
+@main.command()
+@click.argument("entry_id", metavar="ID", type=int)
+def done(entry_id):
+    """Mark an entry as done (read/watched/played based on type)."""
+    entries = storage.load()
+    entry = _find(entries, entry_id)
+
+    if entry is None:
+        click.echo(f"Error: no entry with ID {entry_id}.", err=True)
+        raise SystemExit(1)
+
+    entry["status"] = "done"
+    storage.save(entries)
+    verb = DONE_VERB[entry["type"]]
+    click.echo(f"{verb}: {entry['title']}")
+
+
+@main.command("random")
+@click.option("--type", "media_type", default=None, type=click.Choice(TYPES), help="Filter by type")
+def random_entry(media_type):
+    """Pick a random entry that isn't done yet."""
+    entries = storage.load()
+    pool = [e for e in entries if e["status"] != "done"]
+
+    if media_type:
+        pool = [e for e in pool if e["type"] == media_type]
+
+    if not pool:
+        click.echo("Nothing to pick from.")
+        return
+
+    e = _random.choice(pool)
+    click.echo(f"ID:     {e['id']}")
+    click.echo(f"Title:  {e['title']}")
+    click.echo(f"Type:   {e['type']}")
+    click.echo(f"Status: {e['status']}")
+    click.echo(f"Rating: {e['rating'] if e['rating'] is not None else '---'}")
+    click.echo(f"Note:   {e['note'] if e['note'] else '---'}")
+
+
+@main.command()
+@click.option("--format", "fmt", default="markdown", type=click.Choice(["markdown", "csv"]), show_default=True, help="Output format")
+@click.option("--output", "-o", default=None, help="Output file path (default: shelf_export.md / shelf_export.csv)")
+def export(fmt, output):
+    """Export your shelf to a markdown or CSV file."""
+    entries = storage.load()
+
+    if not entries:
+        click.echo("No entries to export.")
+        return
+
+    if output is None:
+        output = f"shelf_export.{'md' if fmt == 'markdown' else 'csv'}"
+
+    path = Path(output)
+
+    if fmt == "markdown":
+        lines = [
+            "# My Shelf",
+            f"_Exported {date.today().isoformat()} — {len(entries)} entries_",
+            "",
+        ]
+        for media_type in TYPES:
+            group = [e for e in entries if e["type"] == media_type]
+            if not group:
+                continue
+            lines.append(f"## {media_type.capitalize()}s")
+            lines.append("")
+            lines.append("| Title | Status | Rating | Note |")
+            lines.append("|-------|--------|--------|------|")
+            for e in group:
+                rating = str(e["rating"]) if e["rating"] is not None else "—"
+                note = e["note"] or "—"
+                lines.append(f"| {e['title']} | {e['status']} | {rating} | {note} |")
+            lines.append("")
+        path.write_text("\n".join(lines), encoding="utf-8")
+
+    else:
+        buf = io.StringIO()
+        writer = csv.DictWriter(buf, fieldnames=["id", "title", "type", "status", "rating", "note", "added_date"])
+        writer.writeheader()
+        for e in entries:
+            writer.writerow({k: (v if v is not None else "") for k, v in e.items()})
+        path.write_text(buf.getvalue(), encoding="utf-8")
+
+    click.echo(f"Exported {len(entries)} entries to {path}")
+
+
+@main.command()
+def stats():
+    """Show summary statistics for your shelf."""
+    entries = storage.load()
+
+    if not entries:
+        click.echo("No entries yet.")
+        return
+
+    click.echo("By type:")
+    for t in TYPES:
+        count = sum(1 for e in entries if e["type"] == t)
+        click.echo(f"  {t}: {count}")
+
+    click.echo("\nBy status:")
+    for s in STATUSES:
+        count = sum(1 for e in entries if e["status"] == s)
+        if count:
+            click.echo(f"  {s}: {count}")
+
+    click.echo("\nAverage rating by type:")
+    for t in TYPES:
+        ratings = [e["rating"] for e in entries if e["type"] == t and e["rating"] is not None]
+        if ratings:
+            click.echo(f"  {t}: {sum(ratings) / len(ratings):.1f}")
+        else:
+            click.echo(f"  {t}: N/A")
