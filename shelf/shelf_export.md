@@ -23,4 +23,4 @@ _Exported 2026-06-10 — 4 entries_
 
 | Title | Status | Rating | Note |
 |-------|--------|--------|------|
-| Hades | playing | — | — |
+| Hades | done | 8.0 | — |
