@@ -71,8 +71,9 @@ def add(title, media_type, status, note):
 @click.option("--type", "media_type", default=None, type=click.Choice(TYPES), help="Filter by type")
 @click.option("--status", default=None, type=click.Choice(STATUSES), help="Filter by status")
 @click.option("--rating", default=None, type=float, help="Filter by rating")
-def list_entries(media_type, status, rating):
-    """List media entries with optional filters."""
+@click.option("--sort", default=None, type=click.Choice(["title", "type", "status", "rating", "date"]), help="Sort by field")
+def list_entries(media_type, status, rating, sort):
+    """List media entries with optional filters and sorting."""
     entries = storage.load()
 
     if media_type:
@@ -81,6 +82,17 @@ def list_entries(media_type, status, rating):
         entries = [e for e in entries if e["status"] == status]
     if rating is not None:
         entries = [e for e in entries if e["rating"] == rating]
+
+    if sort == "title":
+        entries = sorted(entries, key=lambda e: e["title"].lower())
+    elif sort == "type":
+        entries = sorted(entries, key=lambda e: (e["type"], e["title"].lower()))
+    elif sort == "status":
+        entries = sorted(entries, key=lambda e: (STATUSES.index(e["status"]), e["title"].lower()))
+    elif sort == "rating":
+        entries = sorted(entries, key=lambda e: (e["rating"] is None, -(e["rating"] or 0)))
+    elif sort == "date":
+        entries = sorted(entries, key=lambda e: e["added_date"])
 
     if not entries:
         click.echo("No entries found.")
